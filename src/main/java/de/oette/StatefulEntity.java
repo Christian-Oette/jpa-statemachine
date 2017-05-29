@@ -1,6 +1,6 @@
 package de.oette;
 
-public interface StatefulEntity<T extends State> {
+public interface StatefulEntity<T extends Enum> {
 
     T getState();
 

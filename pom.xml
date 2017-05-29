@@ -7,6 +7,13 @@
     <groupId>de.oette</groupId>
     <artifactId>de.oette.statemachine</artifactId>
     <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <compiler.version>1.8</compiler.version>
+        <compiler.encoding>UTF-8</compiler.encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>

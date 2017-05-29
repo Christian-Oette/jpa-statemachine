@@ -18,7 +18,7 @@ public class StatemachineTest implements StatemachineErrorHandler<MyState>, Tran
                 .withAllowedTransition(MyState.NEW, MyState.PROCESSING)
                 .withAllowedTransition(MyState.PROCESSING, MyState.COMPLETED)
                 .withTransitionListener(this)
-                .withEvent(MyEvent.BAD_ERROR, MyState.FAILED)
+                .withEvent(MyEvent.BAD_ERROR, MyState.PROCESSING, MyState.FAILED)
                 .withExceptionHandler(this)
                 .build();
 
@@ -31,6 +31,10 @@ public class StatemachineTest implements StatemachineErrorHandler<MyState>, Tran
 
     public void onIllegalTransition(MyState from, MyState to) {
         LOGGER.error("Illegal transition from {} to {}", from, to);
+    }
+
+    public void onIllegalEvent(Event event, MyState from) {
+        LOGGER.error("Illegal event {} from {}", event, from);
     }
 
 

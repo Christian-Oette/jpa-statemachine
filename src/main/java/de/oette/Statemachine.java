@@ -1,28 +1,20 @@
 package de.oette;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+public class Statemachine<T extends Enum> {
 
-public class Statemachine<T extends State> {
-
-    private final Map<Event, T> events;
-    private T initialState;
-    private TransitionListener<T> transitionListener;
-    private StatemachineErrorHandler<T> errorHandler;
-    private Map<T, List<T>> allowedTransitions;
+    private final T initialState;
+    private final TransitionListener<T> transitionListener;
+    private final StatemachineErrorHandler<T> errorHandler;
+    private final Transitions<T> allowedTransitions;
 
     public Statemachine(T initialState,
                         TransitionListener<T> transitionListener,
                         StatemachineErrorHandler<T> exceptionHandler,
-                        Map<T, List<T>> allowedTransitions,
-                        Map<Event, T> events) {
+                        Transitions<T> allowedTransitions) {
         this.initialState = initialState;
         this.transitionListener = transitionListener;
         this.errorHandler = exceptionHandler;
         this.allowedTransitions = allowedTransitions;
-        this.events = events;
     }
 
     public void updateState(StatefulEntity<T> entity, T newState) {
@@ -35,42 +27,31 @@ public class Statemachine<T extends State> {
         }
     }
 
-    public boolean isTransitionAllowed(T currentState, T newState) {
-        if (!allowedTransitions.containsKey(currentState)) {
-            return false;
-        }
-        List<T> transitions = allowedTransitions.get(currentState);
-        return transitions!=null && transitions.contains(newState);
-    }
-
     public void init(StatefulEntity<T> entity) {
         entity.updateState(initialState);
-        if (transitionListener!=null) {
-            transitionListener.onInitialState(entity, initialState);
-        }
+        transitionListener.onInitialState(entity, initialState);
     }
 
     private void assertTransitionAllowed(T currentState, T newState) {
-        boolean isTransitionError = !isTransitionAllowed(currentState, newState);
-        if (isTransitionError && errorHandler !=null) {
+        boolean transitionAllowed = allowedTransitions.isTransitionAllowed(currentState, newState);
+        if (!transitionAllowed) {
             errorHandler.onIllegalTransition(currentState, newState);
-        } else if (isTransitionError){
-            throw new IllegalStateException(String.format("Transition from %s to %s is not allowed", currentState, newState));
         }
     }
 
     public void fireEvent(StatefulEntity<T> entity, Event event) {
-        T nextState = this.events.get(event);
-        this.updateState(entity, nextState);
+        T targetStateOnEvent = allowedTransitions.getTargetStateOnEvent(event, entity.getState());
+        if (targetStateOnEvent == null) {
+            errorHandler.onIllegalEvent(event, entity.getState());
+        }
     }
 
-    public static class Builder<T extends State> {
+    public static class Builder<T extends Enum> {
 
         private T initialState;
-        private StatemachineErrorHandler<T> exceptionHandler;
-        private TransitionListener<T> transitionListener;
-        private Map<T, List<T>> allowedTransitions = new HashMap<T, List<T>>();
-        private Map<Event, T> events = new HashMap<Event, T>();
+        private StatemachineErrorHandler<T> exceptionHandler = new DefaultStatemachineErrorHandler<>();
+        private TransitionListener<T> transitionListener = new DefaultTransitionListener<>();
+        private Transitions<T> transitions = new Transitions<>();
 
         public Builder<T> withInitialState(T state) {
             this.initialState = state;
@@ -78,12 +59,7 @@ public class Statemachine<T extends State> {
         }
 
         public Builder<T> withAllowedTransition(T from, T to) {
-            List<T> transitions = this.allowedTransitions.get(from);
-            if (transitions==null) {
-                transitions = new ArrayList<T>();
-                this.allowedTransitions.put(from, transitions);
-            }
-            transitions.add(to);
+            transitions.add(new Transition<>(from, to));
             return this;
         }
 
@@ -97,13 +73,13 @@ public class Statemachine<T extends State> {
             return this;
         }
 
-        public Statemachine<T> build() {
-            return new Statemachine<T>(initialState, transitionListener, exceptionHandler, allowedTransitions, events);
+        public Builder<T> withEvent(Event event, T source, T target) {
+            this.transitions.add(new Transition<>(event, source, target));
+            return this;
         }
 
-        public Builder<T> withEvent(Event event, T state) {
-            this.events.put(event, state);
-            return this;
+        public Statemachine<T> build() {
+            return new Statemachine<T>(initialState, transitionListener, exceptionHandler, transitions);
         }
     }
 }

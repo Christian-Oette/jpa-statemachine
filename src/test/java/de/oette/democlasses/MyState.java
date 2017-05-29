@@ -1,11 +1,8 @@
 package de.oette.democlasses;
 
-import de.oette.State;
-
-public enum MyState implements State {
-
+public enum MyState {
     NEW,
     PROCESSING,
     COMPLETED,
-    FAILED
+    FAILED;
 }
