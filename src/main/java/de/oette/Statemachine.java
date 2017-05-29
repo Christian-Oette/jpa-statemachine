@@ -43,6 +43,8 @@ public class Statemachine<T extends Enum> {
         T targetStateOnEvent = allowedTransitions.getTargetStateOnEvent(event, entity.getState());
         if (targetStateOnEvent == null) {
             errorHandler.onIllegalEvent(event, entity.getState());
+        } else {
+            entity.updateState(targetStateOnEvent);
         }
     }
 
