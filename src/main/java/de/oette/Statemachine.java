@@ -60,7 +60,7 @@ public class Statemachine<T extends Enum> {
             return this;
         }
 
-        public Builder<T> withAllowedTransition(T from, T to) {
+        public Builder<T> withTransition(T from, T to) {
             transitions.add(new Transition<>(from, to));
             return this;
         }
@@ -75,7 +75,7 @@ public class Statemachine<T extends Enum> {
             return this;
         }
 
-        public Builder<T> withEvent(Event event, T source, T target) {
+        public Builder<T> withTransitionOnEvent(Event event, T source, T target) {
             this.transitions.add(new Transition<>(event, source, target));
             return this;
         }
